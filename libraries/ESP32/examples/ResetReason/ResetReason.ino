@@ -12,11 +12,27 @@
 *  Evandro Luis Copercini - 2017
 */
 
-#include <rom/rtc.h>
+#if CONFIG_IDF_TARGET_ESP32 // ESP32/PICO-D4
+#include "esp32/rom/rtc.h"
+#elif CONFIG_IDF_TARGET_ESP32S2
+#include "esp32s2/rom/rtc.h"
+#elif CONFIG_IDF_TARGET_ESP32C2
+#include "esp32c2/rom/rtc.h"
+#elif CONFIG_IDF_TARGET_ESP32C3
+#include "esp32c3/rom/rtc.h"
+#elif CONFIG_IDF_TARGET_ESP32S3
+#include "esp32s3/rom/rtc.h"
+#elif CONFIG_IDF_TARGET_ESP32C6
+#include "esp32c6/rom/rtc.h"
+#elif CONFIG_IDF_TARGET_ESP32H2
+#include "esp32h2/rom/rtc.h"
+#else 
+#error Target CONFIG_IDF_TARGET is not supported
+#endif
 
 #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
 
-void print_reset_reason(RESET_REASON reason)
+void print_reset_reason(int reason)
 {
   switch ( reason)
   {
@@ -39,7 +55,7 @@ void print_reset_reason(RESET_REASON reason)
   }
 }
 
-void verbose_print_reset_reason(RESET_REASON reason)
+void verbose_print_reset_reason(int reason)
 {
   switch ( reason)
   {
@@ -75,11 +91,17 @@ void setup() {
   print_reset_reason(rtc_get_reset_reason(1));
   verbose_print_reset_reason(rtc_get_reset_reason(1));
 
+#ifndef CONFIG_IDF_TARGET_ESP32H2
   // Set ESP32 to go to deep sleep to see a variation
   // in the reset reason. Device will sleep for 5 seconds.
+#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32H2
+  esp_sleep_pd_config(ESP_PD_DOMAIN_RC_FAST, ESP_PD_OPTION_OFF);
+#else
   esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_OFF);
+#endif
   Serial.println("Going to sleep");
   esp_deep_sleep(5 * uS_TO_S_FACTOR);
+#endif
 }
 
 void loop() {
